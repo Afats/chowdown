@@ -1,12 +1,12 @@
 import pypokedex
 
-# helper for pypoke
+# helper for pypokedex
 
-pokemon_name = 'Garbodor'
+pokemon_name = ' Glalie  '
 
 try: 
-    pokemon = pypokedex.get(name=pokemon_name)
-    print(pokemon.name)
+    pokemon = pypokedex.get(name=pokemon_name.strip())
+    print(pokemon.name.capitalize())
     print(pokemon.types)
     print(pokemon.abilities)
     print(pokemon.weight)
