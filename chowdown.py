@@ -5,6 +5,7 @@ from fake_useragent import UserAgent
 import time
 import random
 import re
+import pypokedex
 
 
 # create a random real user agent to act as a spectator - avoids 0 users and no logs showing when scraping
@@ -22,12 +23,20 @@ options.add_experimental_option("detach", True)
 # # initally wait min. seconds for page to load
 # driver.implicitly_wait(7)
 
-
+# globals
 battle_link = ""
 all_battle_logs = []
 team = {}
 challenger = ""
 acceptor = ""
+curr_challenger_pokemon = ""
+curr_acceptor_pokemon = ""
+# current turn being scraped
+curr_turn = 0
+# the current turn in play -- may not contain battle logs
+curr_game_turn = 0
+
+#------------------------------------------------------------
 
 # parse input battle link
 def parse_battle_link(battle_link):
@@ -59,6 +68,15 @@ def scrape_turn(i):
         return get_turn_num(turn.text)
     except:
         print("no turn found")
+        return 0
+    
+# helper to get pypokedex object
+def get_pokemon_info(pokemon_name):
+    try: 
+        pokemon = pypokedex.get(name=pokemon_name)
+        pokemon.name = pokemon.name.capitalize()
+        return pokemon
+    except:
         return 0
     
 
@@ -101,6 +119,9 @@ def get_players():
 # scrape until curr_turn is curr_game_turn
 def scrape_battle_logs(curr_turn, curr_game_turn):
     global all_battle_logs
+    global curr_challenger_pokemon
+    global curr_acceptor_pokemon
+    global team
 
     try:
         action_logs_scraped = driver.find_elements(By.XPATH, "//div[@class='inner message-log']//div[@class='battle-history']/strong[1] | //div[@class='inner message-log']//h2[@class='battle-history']")
@@ -132,13 +153,22 @@ def scrape_battle_logs(curr_turn, curr_game_turn):
                 for j in range(x,y):
                     # all turns until current turn parsed
                     if j == x and get_turn_num(action_logs[j]) == curr_game_turn:
+                        print("All turns until current game turn parsed.")
                         break    
                     elif j == x+1:
                         # challenger's pokemon
-                        team[challenger][action_logs[j]] = {}
+                        pokemon = get_pokemon_info(action_logs[j])
+                        team[challenger][pokemon.name]['pokemon_info'] = pokemon
+                        curr_challenger_pokemon = pokemon.name
+                        print("Challenger's curr pokemon:", curr_challenger_pokemon)
+                        print("Team state:", team)
                     elif j == x+2:
                         # acceptor's pokemon
-                        team[acceptor][action_logs[j]] = {}
+                        pokemon = get_pokemon_info(action_logs[j])
+                        team[acceptor][pokemon.name]['pokemon_info'] = pokemon
+                        curr_acceptor_pokemon = pokemon.name
+                        print("Acceptor's curr pokemon:", curr_challenger_pokemon)
+                        print("Team state:", team)
             
             # for all other turns, parse the logs as moves/switches
             else:
@@ -149,28 +179,94 @@ def scrape_battle_logs(curr_turn, curr_game_turn):
                 for j in range(x,y):
 
                     if j == x and get_turn_num(action_logs[j]) == curr_game_turn:
+                        print("All turns until current game turn parsed, curr_turn >=1 .")
                         break   
                     # figure out if it is a move/pokemon switch
                     # if move assign to right pokemon
                     # if switch assign to right player
                     else: 
-                        continue
-                        # assume action is a pokemon switch
-                        # check if pokemon exists via pokeapi
+                        # assume action is a pokemon (switch)
+                        # check ifa pokemon exists via pokeapi
                         # if pokemon exists, check the mention in battle logs:
                             # if sentence is Go! Pokemon!, challenger made a switch
                                 # add pokemon to challenger's team
                             # else acceptor made a switch
                                 # add pokemon to acceptor's team
+                        
+                        is_move = False
 
-                        # if neither of the above happened, action is a move
+                        try:
+                            pokemon = action_logs[j]
+                            # assign pokemon to pypokedex object
+                            pokemon = get_pokemon_info(pokemon)
+                            if pokemon == 0:
+                                raise Exception("Pokemon not found")
+
+                            # find pokemon in the sentence "Go! Pokemon!" in battle logs: challenger made a switch
+                            # find acceptor name and pokemon in battle logs: acceptor made a switch
+                            for log in battle_logs:
+                                if "Go! " in log and pokemon.name in log:
+                                    # challenger made a switch
+                                    team[challenger][pokemon.name] = {}
+                                    curr_challenger_pokemon = pokemon.name
+                                    # remove all logs up to and including the switch
+                                    battle_logs = battle_logs[battle_logs.index(log)+1:]
+                                    print("Challenger's curr pokemon:", curr_challenger_pokemon)
+                                    print("Team state:", team)
+                                    print("Battle logs post-mod.:", battle_logs)
+                                    break
+                                
+                                elif acceptor in log and pokemon.name in log:
+                                    # acceptor made a switch
+                                    team[acceptor][pokemon.name] = {}
+                                    curr_acceptor_pokemon = pokemon.name
+                                    battle_logs = battle_logs[battle_logs.index(log)+1:]
+                                    print("Acceptor's curr pokemon:", curr_acceptor_pokemon)
+                                    print("Team state:", team)
+                                    print("Battle logs post-mod.:", battle_logs)
+                                    break
+
+                        except:
+                            # action is not a pokemon
+                            print(action_logs[j], "is not a pokemon.")
+                            is_move = True
+                            return 
+                        
+                        # if the above didn't happen, action is a move
                         # find first instance of action and challenger's current pokemon in a modified all_battle_logs
                             # add move to challenger's current pokemon
                         # else find first instance of action and acceptor's current pokemon in a modified all_battle_logs
                             # add move to acceptor's current pokemon
 
-    except:
-        print("No turn battle logs found. :(")
+                        if (is_move):
+                            try:
+                                move = action_logs[j]
+
+                                # find first instance of move and challenger's current pokemon in a modified all_battle_logs
+                                for log in battle_logs:
+                                    if move in log and curr_challenger_pokemon in log:
+                                        # add move to challenger's current pokemon
+                                        team[challenger][curr_challenger_pokemon]['moves'].append(move)
+                                        # remove all logs up to and including the move
+                                        battle_logs = battle_logs[battle_logs.index(log)+1:]
+                                        print("Team state:", team)
+                                        print("Battle logs post-mod.:", battle_logs)
+                                        break
+                                    if move in log and curr_acceptor_pokemon in log:
+                                        # add move to acceptor's current pokemon
+                                        team[acceptor][curr_acceptor_pokemon]['moves'].append(move)
+                                        # remove all logs up to and including the move
+                                        battle_logs = battle_logs[battle_logs.index(log)+1:]
+                                        print("Team state:", team)
+                                        print("Battle logs post-mod.:", battle_logs)
+                                        break
+                                   
+                            except:
+                                print("No move or pokemon action match found. Welp. :(")
+                                return 0
+
+    except Exception as e:
+        print("Error in scrape_battle_logs: ", e)
         return 0
     
       
@@ -193,12 +289,6 @@ def get_all_battle_logs():
         return 0
     
 
-
-# current turn being scraped
-curr_turn = 0
-# the current turn in play -- may not contain battle logs
-curr_game_turn = 0
-
 # run main function every 4-7 seconds
 def main():
     global curr_turn
@@ -211,6 +301,7 @@ def main():
     all_battle_logs = get_all_battle_logs()
     curr_game_turn = get_curr_game_turn(all_battle_logs)
     scrape_battle_logs(curr_turn, curr_game_turn)
+    print("Team states: ", team)
     
     while True:
         # all_battle_logs = get_all_battle_logs()
@@ -221,7 +312,7 @@ def main():
         time.sleep(time_to_wait)
         
 
-battle_link = input("Insert battle link or code: ")
+battle_link = input("Insert battle link or code (curr. after turn 1 ONLY): ")
 battle_link = parse_battle_link(battle_link)
 driver = webdriver.Chrome(options=options)
 driver.get(battle_link)
