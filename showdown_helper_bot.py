@@ -5,8 +5,7 @@ from fake_useragent import UserAgent
 
 # just a py page for ideas, experiemnts and code snippets
 
-# todo: upload to github and add a descriptive readme for setup (install python, install selenium, install fake_useragent, install chromedriver, etc.)
-# todo: get battle link/code from user
+
 # todo: ask user if they are challenger or acceptor 
 # todo: scrape from user's session instead of spectator if possible
 # todo: write seperate setup code for battle factory
