@@ -100,6 +100,8 @@ def get_players():
 
 # scrape until curr_turn is curr_game_turn
 def scrape_battle_logs(curr_turn, curr_game_turn):
+    global all_battle_logs
+
     try:
         action_logs_scraped = driver.find_elements(By.XPATH, "//div[@class='inner message-log']//div[@class='battle-history']/strong[1] | //div[@class='inner message-log']//h2[@class='battle-history']")
         action_logs = []
@@ -107,9 +109,14 @@ def scrape_battle_logs(curr_turn, curr_game_turn):
         for log in action_logs_scraped:
             action_logs.append(log.text)
 
+        # !! todo: condense multi-hit moves into 1 action
+
         action_logs.insert(0, "Turn 0")
         print("Actions: ", action_logs)
         print()
+
+        # local battle logs instance
+        battle_logs = all_battle_logs
 
         # only 2 actions max per turn - move/switch poke, and move/switch poke (note: move itself may have multiple actions)
         # scrape b/w curr_turn and curr_game_turn
@@ -123,11 +130,9 @@ def scrape_battle_logs(curr_turn, curr_game_turn):
             # for turn 0, set challenger and acceptor pokemon
             if (x == 0):
                 for j in range(x,y):
-
                     # all turns until current turn parsed
                     if j == x and get_turn_num(action_logs[j]) == curr_game_turn:
-                        break
-                        
+                        break    
                     elif j == x+1:
                         # challenger's pokemon
                         team[challenger][action_logs[j]] = {}
@@ -137,11 +142,32 @@ def scrape_battle_logs(curr_turn, curr_game_turn):
             
             # for all other turns, parse the logs as moves/switches
             else:
-                continue
                 # call parse fucntion logic for moves
-                    # parse all_battle_logs to remove common english words (except for turn/Turn, playernames and numbers)
+                    # parse all_battle_logs to remove common english words (except for turn/Turn, playernames and numbers)??
                     # check instance of word in all_battle_logs[i]
                 # call parse function logic for switches if moves are not found
+                for j in range(x,y):
+
+                    if j == x and get_turn_num(action_logs[j]) == curr_game_turn:
+                        break   
+                    # figure out if it is a move/pokemon switch
+                    # if move assign to right pokemon
+                    # if switch assign to right player
+                    else: 
+                        continue
+                        # assume action is a pokemon switch
+                        # check if pokemon exists via pokeapi
+                        # if pokemon exists, check the mention in battle logs:
+                            # if sentence is Go! Pokemon!, challenger made a switch
+                                # add pokemon to challenger's team
+                            # else acceptor made a switch
+                                # add pokemon to acceptor's team
+
+                        # if neither of the above happened, action is a move
+                        # find first instance of action and challenger's current pokemon in a modified all_battle_logs
+                            # add move to challenger's current pokemon
+                        # else find first instance of action and acceptor's current pokemon in a modified all_battle_logs
+                            # add move to acceptor's current pokemon
 
     except:
         print("No turn battle logs found. :(")
