@@ -1,6 +1,7 @@
 # Chowdown
 
 Gotta chow em' all!
+Currently only unique singles teams are supported. Support for doubles, and multiple instances of pokemon in either team/s coming soon.
 
 
 
