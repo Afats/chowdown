@@ -29,7 +29,9 @@ def get_pokemon_info(pokemon_name):
     try: 
         pokemon = pypokedex.get(name=pokemon_name.strip())
         pokemon.name = pokemon.name.capitalize()
+        print("Pokemon found in pokedex:", pokemon.name)
         return pokemon
     except:
+        print("Pokemon not found in pokedex:", pokemon.name)
         return -1
     

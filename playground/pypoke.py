@@ -2,7 +2,7 @@ import pypokedex
 
 # helper for pypokedex
 
-pokemon_name = ' Glalie  '
+pokemon_name = 'Toxtricity-Low-Key'
 
 try: 
     pokemon = pypokedex.get(name=pokemon_name.strip())

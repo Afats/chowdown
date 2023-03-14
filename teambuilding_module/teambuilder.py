@@ -20,8 +20,11 @@ def update_teams(game_state):
         curr_challenger_pokemon = game_state.get_curr_challenger_pokemon()
         curr_acceptor_pokemon = game_state.get_curr_acceptor_pokemon()
 
-        print("damn")
-        print("action[0]:", action_logs[0])
+        print("Battle logs: ", battle_logs)
+        print()
+        print("Action logs: ", action_logs)
+        print()
+
 
         # TODO !: only 1 action max per turn in usual - one pokemon fliches/paralyzed, etc.
         # !!: only 2 actions max per turn in usual - move/switch poke, and move/switch poke (note: move itself may have multiple actions)
@@ -43,7 +46,7 @@ def update_teams(game_state):
                     for j in range(x,y):
                         # all turns until current turn parsed
                         print("j is", j, "and x is", x, "and curr_game_turn is", curr_game_turn)
-                        print("acvtion: ", action_logs[j])
+                        print("Action log: ", action_logs[j])
                         if j == x and get_turn_num(action_logs[j]) == curr_game_turn:
                             print("All turns until current game turn parsed.")
                             break    
@@ -51,25 +54,30 @@ def update_teams(game_state):
                             # challenger's pokemon
                             print("Challenger's starting pokemon to parse:", action_logs[j])
                             pokemon = get_pokemon_info(action_logs[j])
+                            team[challenger] = {}
                             team[challenger][pokemon.name] = {}
                             team[challenger][pokemon.name]['pokemon_info'] = pokemon
                             curr_challenger_pokemon = pokemon.name
-                            # print("Team state:", team)
+                            print("Team state:", team)
                         elif j == x+2:
                             # acceptor's pokemon
                             print("Acceptors's starting pokemon to parse:", action_logs[j])
                             pokemon = get_pokemon_info(action_logs[j])
+                            team[acceptor] = {}
                             team[acceptor][pokemon.name] = {}
                             team[acceptor][pokemon.name]['pokemon_info'] = pokemon
                             curr_acceptor_pokemon = pokemon.name
-                            # print("Team state:", team)
+                            print("Team state:", team)
                 except Exception as e:
                     print("Error in parsing challenger and acceptor starting pokemon: ", e)
                     break
                 else:
                     # update game state
+                    print("!!!! Starting pokemon set! Updating game state...")
                     game_state.update_battle_state(team, curr_challenger_pokemon, curr_acceptor_pokemon)
                     game_state.update_logs(battle_logs, action_logs)
+                    print("Chall pokemon in play: ", game_state.get_curr_challenger_pokemon())
+                    print("Accep pokemon in play: ", game_state.get_curr_acceptor_pokemon())
             
             # for all other turns, parse the logs as moves/switches
             else:
@@ -121,7 +129,7 @@ def update_teams(game_state):
                             for log in battle_logs:
                                 if "Go! " in log and pokemon.name in log:
                                     # challenger made a switch 
-                                    print("Challenger switch Log: ", log)
+                                    print("Challenger switch log: ", log)
                                     if pokemon.name in team[challenger]:
                                         curr_challenger_pokemon = pokemon.name
                                         
@@ -141,7 +149,7 @@ def update_teams(game_state):
                                 elif acceptor in log and pokemon.name in log:
                                     # acceptor made a switch
                                     
-                                    print("Acceptor switch Log: ", log)
+                                    print("Acceptor switch log: ", log)
                                     if pokemon.name in team[acceptor]:
                                         curr_acceptor_pokemon = pokemon.name
 
@@ -164,8 +172,11 @@ def update_teams(game_state):
 
                         else:     
                             # update game state
+                            print("!!!! Pokemon found! Updating game state...")
                             game_state.update_battle_state(team, curr_challenger_pokemon, curr_acceptor_pokemon)
                             game_state.update_logs(battle_logs, action_logs)
+                            print("Chall pokemon in play: ", game_state.get_curr_challenger_pokemon())
+                            print("Accep pokemon in play: ", game_state.get_curr_acceptor_pokemon())
 
                         
                         # if the above didn't happen, action is a move
@@ -174,6 +185,7 @@ def update_teams(game_state):
                         # else find first instance of action and acceptor's current pokemon in a modified battle_logs
                             # add move to acceptor's current pokemon
 
+                        # can't have moves w/o pokemon having played them
                         if (is_move):
                             try:
                                 move = str(action_logs[j]).strip()
@@ -182,13 +194,15 @@ def update_teams(game_state):
                                 # find first instance of move and challenger's current pokemon in a modified battle_logs
                                 for log in battle_logs:
 
-                                    # in case it has been changed 
+                                    # in case it has been changed ???
                                     curr_challenger_pokemon = game_state.get_curr_challenger_pokemon()
                                     curr_acceptor_pokemon = game_state.get_curr_acceptor_pokemon()
 
+                                    # print("Checking if", move, "and", curr_challenger_pokemon, "is in", log, "...")
+
                                     if move in log and curr_challenger_pokemon in log:
                                         # add move to challenger's current pokemon
-                                        print("Adding ", move, "to ", game_state.get_curr_challenger_pokemon(), "for ", challenger, "...")
+                                        print("Adding ", move, "to ", curr_challenger_pokemon, "for ", challenger, "...")
                                         # check if 'moves' key exists
                                         if 'moves' not in team[challenger][curr_challenger_pokemon]:
                                             team[challenger][curr_challenger_pokemon]['moves'] = []
@@ -200,6 +214,8 @@ def update_teams(game_state):
                                         print("Team state:", team)
                                         # print("Battle logs post-mod.:", battle_logs)
                                         break
+                                    
+                                    # print("Checking if", move, "and", curr_acceptor_pokemon, "is in", log, "...")
 
                                     if move in log and curr_acceptor_pokemon in log:
                                         # add move to acceptor's current pokemon
@@ -222,8 +238,11 @@ def update_teams(game_state):
 
                             else:
                                 # update game state
+                                print("!!!! Move found! Updating game state...")
                                 game_state.update_battle_state(team, curr_challenger_pokemon, curr_acceptor_pokemon)
                                 game_state.update_logs(battle_logs, action_logs)
+                                print("Chall pokemon in play: ", game_state.get_curr_challenger_pokemon())
+                                print("Accep pokemon in play: ", game_state.get_curr_acceptor_pokemon())
 
                             
                                 

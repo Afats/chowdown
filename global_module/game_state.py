@@ -76,14 +76,14 @@ class GameState:
         self.curr_game_turn = curr_game_turn
 
     # updating the pokemon in play and team pokemon info
-    def update_battle_state(self, team, challenger, acceptor):
+    def update_battle_state(self, team, curr_challenger_pokemon, curr_acceptor_pokemon):
         self.set_team(team)
-        self.set_challenger(challenger)
-        self.set_acceptor(acceptor)
+        self.set_curr_challenger_pokemon(curr_challenger_pokemon)
+        self.set_curr_acceptor_pokemon(curr_acceptor_pokemon)
 
-    def update_logs(self, battle_log, action_log):
-        self.set_battle_logs(battle_log)
-        self.set_action_logs(action_log)
+    def update_logs(self, battle_logs, action_logs):
+        self.set_battle_logs(battle_logs)
+        self.set_action_logs(action_logs)
 
     def update_entire_game_state(self, battle_state):
         self.set_battle_logs(battle_state.get_battle_logs())

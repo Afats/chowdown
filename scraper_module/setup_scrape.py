@@ -53,10 +53,10 @@ options.add_argument(f'user-agent={userAgent}')
 options.add_experimental_option("detach", True)
 
 game_state = GameState()
-battle_link = input("Insert battle link or code (only after turn 1 has been played): ")
-battle_link = parse_battle_link(battle_link)
-driver = webdriver.Chrome(options=options)
-driver.get(battle_link)
-game_state.set_battle_link(battle_link)
-# initally wait min. seconds for js in page to load
-driver.implicitly_wait(10)
+# battle_link = input("Insert battle link or code (only after turn 1 has been played): ")
+# battle_link = parse_battle_link(battle_link)
+# driver = webdriver.Chrome(options=options)
+# driver.get(battle_link)
+# game_state.set_battle_link(battle_link)
+# # initally wait min. seconds for js in page to load
+# driver.implicitly_wait(10)
