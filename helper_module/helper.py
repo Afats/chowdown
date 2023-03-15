@@ -11,6 +11,10 @@ def get_turn_num(turn_string):
         print("No turn number found. :(")
         return -1
     
+# get turn string from turn number
+def get_turn_string(turn_num):
+    return "Turn " + str(turn_num)
+    
     
 # get the current turn in play
 def get_curr_game_turn_from_logs(battle_logs):
