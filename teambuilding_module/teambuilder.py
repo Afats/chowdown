@@ -33,8 +33,9 @@ def update_teams(game_state):
         x_inc = 0
         x = -3
         y = 0
-        for turn in range(curr_turn, curr_game_turn+1):
+        for turn in range(curr_turn, curr_game_turn):
             # set starting challenger and acceptor pokemon
+            print("Curr turn being processed: ", turn)
             x += 3 + x_inc
             y += 3
             x_inc = 0
@@ -85,12 +86,19 @@ def update_teams(game_state):
                 print("Turn", turn, ": Parsing actions from ", action_logs[x], "to " , action_logs[y-1], "...")
                 
                 # check if action_logs[y] is a turn number -- to deal w 1 or 2 faints per turn
+
+                # TODO: a pokemon has flinched/paralyzed, etc. and is unable to make a move
+                # if get_turn_num(action_logs[y-1]) != -1:
+
                 if get_turn_num(action_logs[y]) == -1:
                     # increment y until get_turn_num(action_logs[y-1]) != -1
+                    print("!!! Action log at y is not a turn number. Incrementing y until it is a turn number...")
                     x_inc = 0
                     while get_turn_num(action_logs[y]) == -1:
                         y += 1
                         x_inc += 1
+
+                    print("!!! Action log at y is now a turn number. Parsing actions from ", action_logs[x], "to " , action_logs[y-1], "...")
 
                 for j in range(x,y):
                     if j == x and get_turn_num(action_logs[j]) == curr_game_turn:
@@ -188,6 +196,7 @@ def update_teams(game_state):
                         # can't have moves w/o pokemon having played them
                         if (is_move):
                             try:
+                                move_added = False
                                 move = str(action_logs[j]).strip()
                                 print("Assuming", move, "is a move.")
 
@@ -198,11 +207,19 @@ def update_teams(game_state):
                                     curr_challenger_pokemon = game_state.get_curr_challenger_pokemon()
                                     curr_acceptor_pokemon = game_state.get_curr_acceptor_pokemon()
 
+                                    # if pokemon has hyphen in name (e.g. Toxtricity-Low-Key), remove hyphen and results in Toxtricity to match w logs
+                                    if "-" in curr_challenger_pokemon:
+                                        challenger_pokemon_search = curr_challenger_pokemon.split("-")[0]
+
+                                    else:
+                                        challenger_pokemon_search = curr_challenger_pokemon
+
+
                                     # print("Checking if", move, "and", curr_challenger_pokemon, "is in", log, "...")
 
-                                    if move in log and curr_challenger_pokemon in log:
+                                    if move in log and challenger_pokemon_search in log:
                                         # add move to challenger's current pokemon
-                                        print("Adding ", move, "to ", curr_challenger_pokemon, "for ", challenger, "...")
+                                        print("Adding", move, "to", curr_challenger_pokemon, "for", challenger, "...")
                                         # check if 'moves' key exists
                                         if 'moves' not in team[challenger][curr_challenger_pokemon]:
                                             team[challenger][curr_challenger_pokemon]['moves'] = []
@@ -213,13 +230,20 @@ def update_teams(game_state):
                                         battle_logs = battle_logs[battle_logs.index(log)+1:]
                                         print("Team state:", team)
                                         # print("Battle logs post-mod.:", battle_logs)
+                                        move_added = True
                                         break
                                     
                                     # print("Checking if", move, "and", curr_acceptor_pokemon, "is in", log, "...")
 
-                                    if move in log and curr_acceptor_pokemon in log:
+                                    if "-" in curr_acceptor_pokemon:
+                                        acceptor_pokemon_search = curr_acceptor_pokemon.split("-")[0]
+                                    
+                                    else:
+                                        acceptor_pokemon_search = curr_acceptor_pokemon
+
+                                    if move in log and acceptor_pokemon_search in log:
                                         # add move to acceptor's current pokemon
-                                        print("Adding ", move, "to ", curr_acceptor_pokemon, "for ", acceptor, "...")
+                                        print("Adding", move, "to", curr_acceptor_pokemon, "for", acceptor, "...")
                                         # check if 'moves' key exists
                                         if 'moves' not in team[acceptor][curr_acceptor_pokemon]:
                                             team[acceptor][curr_acceptor_pokemon]['moves'] = []
@@ -231,22 +255,27 @@ def update_teams(game_state):
                                         battle_logs = battle_logs[battle_logs.index(log)+1:]
                                         print("Team state:", team)
                                         # print("Battle logs post-mod.:", battle_logs)
+                                        move_added = True
                                         break
                                    
                             except Exception as e:
                                 print("Error in move parsing: ", e)
 
                             else:
-                                # update game state
-                                print("!!!! Move found! Updating game state...")
-                                game_state.update_battle_state(team, curr_challenger_pokemon, curr_acceptor_pokemon)
-                                game_state.update_logs(battle_logs, action_logs)
-                                print("Chall pokemon in play: ", game_state.get_curr_challenger_pokemon())
-                                print("Accep pokemon in play: ", game_state.get_curr_acceptor_pokemon())
-
-                            
-                                
+                                if move_added:
+                                    # update game state
+                                    print("!!!! Move found! Updating game state...")
+                                    game_state.update_battle_state(team, curr_challenger_pokemon, curr_acceptor_pokemon)
+                                    game_state.update_logs(battle_logs, action_logs)
+                                    print("Chall pokemon in play: ", game_state.get_curr_challenger_pokemon())
+                                    print("Accep pokemon in play: ", game_state.get_curr_acceptor_pokemon())
+                                else:
+                                    print("Move not added:", move)
 
     except Exception as e:
         print("Error in update_teams: ", e)
         return 0
+    
+    else:
+        print("Teams updated successfully.")
+        return 1

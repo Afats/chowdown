@@ -5,8 +5,8 @@ from teambuilding_module.teambuilder import GameState
 def init_game_state():
     game_state = GameState()
     game_state.set_battle_link("https://play.pokemonshowdown.com/battle-gen8randombattle-129325")
-    game_state.set_challenger("Challenger")
-    game_state.set_acceptor("Acceptor")
+    game_state.set_challenger("brubbby")
+    game_state.set_acceptor("afats")
     game_state.set_curr_challenger_pokemon("Challenger's Pokemon")
     game_state.set_curr_acceptor_pokemon("Acceptor's Pokemon")
     game_state.set_curr_turn(0)
